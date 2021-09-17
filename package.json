@@ -4,7 +4,7 @@
   "description": "GUI for SQS. Useful for local development.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "nodemon index.js"
   },
   "bin": "./bin/sqs-admin.js",
   "repository": {
@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "aws-sdk": "^2.5.0",
+    "body-parser": "^1.19.0",
     "ejs": "^2.5.1",
     "errorhandler": "^1.4.3",
     "es6-promisify": "^4.1.0",

@@ -8,6 +8,8 @@ const app = express()
 const AWS = require('aws-sdk')
 const path = require('path')
 const errorhandler = require('errorhandler')
+
+var bodyParser = require('body-parser')
 require('es7-object-polyfill')
 
 
@@ -20,6 +22,7 @@ AWS.config.update({
 })
 const sqs = new AWS.SQS()
 
+var jsonParser = bodyParser.json()
 app.set('json spaces', 2)
 app.set('view engine', 'ejs')
 app.set('views', path.resolve(__dirname, 'views'))
@@ -68,11 +71,37 @@ app.get('/queues/:QueueName/meta', async (req, res, next) => {
   }
 })
 
+app.get('/queues/:QueueName/send', async (req, res, next) => {
+  const {QueueName} = req.params;
+  try{
+    const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise()
+    const {Attributes} = await sqs.getQueueAttributes({QueueUrl, AttributeNames: ['All']}).promise()
+    res.render('send', {Queue: {QueueName, Attributes}})
+  }catch(err){
+    next(err)
+  }
+})
+
 app.delete('/queues/:QueueName/messages', async (req, res, next) => {
   const {QueueName} = req.params;
   try{
     const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise()
     await sqs.purgeQueue({QueueUrl}).promise()
+    res.status(204).end()
+  }catch(err){
+    next(err)
+  }
+})
+
+app.post('/queues/:QueueName/messages', jsonParser, async (req, res, next) => {
+  const {QueueName} = req.params;
+  try{
+    const {QueueUrl} = await sqs.getQueueUrl({QueueName}).promise()
+    await sqs.sendMessage(
+      {QueueUrl: QueueUrl,
+        MessageBody: JSON.stringify(req.body)
+      }
+    ).promise();
     res.status(204).end()
   }catch(err){
     next(err)
